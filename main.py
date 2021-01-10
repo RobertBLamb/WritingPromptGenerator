@@ -54,23 +54,28 @@ def savePDF(name):
     print("File Saved!")
 
 
-def addAdjuctive():  # TODO: add functionality to button
-    print("adding an adjective")
+def addAdjuctive():
+    try:  # if dictionary already saved
+        adjs = pickle.load(open("adjs.dat", "rb"))
+        adjs[newAdjEntry.get()] = True
+        pickle.dump(adjs, open("adjs.dat", "wb"))
+        print("adj: dictionary not empty")
+    except:  # if first time using dictionary
+        adjDict[newAdjEntry.get()] = True
+        pickle.dump(adjDict, open("adjs.dat", "wb"))
+        print("adj: first entry")
 
 
-def addNoun():  # TODO: add functionality to button
-    #adds info to save
-    #add new variables
-    #pickleOut = open("dict.pickle", "wb")
-    #pickle.dump(nounDict, pickleOut)
-    #pickleOut.close()
-
-    #move after
-    #open saved data
-    #pickleIn = open("dict.pickle", "rb")
-    #nounDict = pickle.load(pickleIn)
-    print("adding a noun")
-
+def addNoun():
+    try:    # if dictionary already saved
+        nouns = pickle.load(open("nouns.dat", "rb"))
+        nouns[newNounEntry.get()] = True
+        pickle.dump(nouns, open("nouns.dat", "wb"))
+        print("noun: dictionary not empty")
+    except:  # if first time using dictionary
+        nounDict[newNounEntry.get()] = True
+        pickle.dump(nounDict, open("nouns.dat", "wb"))
+        print("noun: first entry")
 
 
 #  todo add user input functionality, bug inside
@@ -133,7 +138,7 @@ myButtonStart.grid(row=5, column=2)
 newNounLabel = Label(root, text="Noun to add to options")
 newNounLabel.grid(row=0, column=3)
 
-newNounEntry = Entry(root, width=3, font=("Arial", 12, ""))
+newNounEntry = Entry(root, width=3, font=("Arial", 12, ""), textvariable='newNoun')
 newNounEntry.grid(row=1, column=3)
 
 nounButton = Button(root, text="Add Noun", command=addNoun)
@@ -142,7 +147,7 @@ nounButton.grid(row=1, column=4)
 newAdjLabel = Label(root, text="Adjective to add to options")
 newAdjLabel.grid(row=0, column=1)
 
-newAdjEntry = Entry(root, width=3, font=("Arial", 12, ""))
+newAdjEntry = Entry(root, width=3, font=("Arial", 12, ""), textvariable='newAdj')
 newAdjEntry.grid(row=1, column=1)
 
 adjButton = Button(root, text="Add Adjective", command=addAdjuctive)
