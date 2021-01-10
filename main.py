@@ -5,6 +5,8 @@ from fpdf import FPDF   # generate pdf with the prompt used and your response
 import time
 import pickle   # for saving nouns and adjectives to use as prompts
 
+
+# region pdf and tkinter setup
 pdf = FPDF()    # initialize pdf information
 pdf.add_page()
 pdf.set_font("Arial", size=14)
@@ -13,8 +15,10 @@ root = Tk()
 root.title('Creature Design Prompts')
 root.geometry("400x600")
 
-nounDict = {}
-adjDict = {}
+nounSet = {"school", "field", "t-rex"}
+adjSet = {"heroic", "comfy", "educated"}
+#endregion
+
 
 # region timer ui
 # todo move into own script
@@ -49,6 +53,7 @@ secondEntry = Entry(root, width=3, font=("Arial", 18, ""), textvariable=second)
 secondEntry.grid(row=4, column=3)
 #endregion
 
+
 def savePDF(name):
     pdf.output("{}.pdf".format(name))
     print("File Saved!")
@@ -57,24 +62,24 @@ def savePDF(name):
 def addAdjuctive():
     try:  # if dictionary already saved
         adjs = pickle.load(open("adjs.dat", "rb"))
-        adjs[newAdjEntry.get()] = True
+        adjs.add(newAdjEntry.get().lower())
         pickle.dump(adjs, open("adjs.dat", "wb"))
-        print("adj: dictionary not empty")
+        print(adjs)
     except:  # if first time using dictionary
-        adjDict[newAdjEntry.get()] = True
-        pickle.dump(adjDict, open("adjs.dat", "wb"))
+        adjSet.add(newAdjEntry.get().lower())
+        pickle.dump(adjSet, open("adjs.dat", "wb"))
         print("adj: first entry")
 
 
 def addNoun():
     try:    # if dictionary already saved
         nouns = pickle.load(open("nouns.dat", "rb"))
-        nouns[newNounEntry.get()] = True
+        nouns.add(newNounEntry.get().lower())
         pickle.dump(nouns, open("nouns.dat", "wb"))
-        print("noun: dictionary not empty")
+        print(nouns)
     except:  # if first time using dictionary
-        nounDict[newNounEntry.get()] = True
-        pickle.dump(nounDict, open("nouns.dat", "wb"))
+        nounSet.add(newNounEntry.get().lower())
+        pickle.dump(nounSet, open("nouns.dat", "wb"))
         print("noun: first entry")
 
 
