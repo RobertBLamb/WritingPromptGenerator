@@ -1,15 +1,16 @@
 # TODO move defs and imports into own scripts
+import tkinter as tk
 from tkinter import *   # generate window for the user to interact with
 from tkinter import messagebox
 from fpdf import FPDF   # generate pdf with the prompt used and your response
-import time
-import pickle   # for saving nouns and adjectives to use as prompts
+import pickle   # for saving nouns and adjectives to use as
+import random
 
 
-# region pdf and tkinter setup
+# region pdf, tkinter, and global variable setup
+
+
 pdf = FPDF()    # initialize pdf information
-pdf.add_page()
-pdf.set_font("Arial", size=14)
 
 root = Tk()
 root.title('Creature Design Prompts')
@@ -17,13 +18,22 @@ root.geometry("400x600")
 
 nounSet = {"school", "field", "t-rex"}
 adjSet = {"heroic", "comfy", "educated"}
+
+
+pdfName = StringVar()
+pdfName.set("New Pdf")
+prompt = StringVar()
+prompt.set("Santa fighting Global Warming")
+usersResponse = StringVar()
+usersResponse.set("Something went Wrong")
 #endregion
+
+typingText = Text() # todo this is here for testing purposes
 
 
 # region timer ui
-# todo move into own script
-# code for the timer
-# Declaration of variables
+time = 0
+
 hour = StringVar()
 minute = StringVar()
 second = StringVar()
@@ -54,9 +64,15 @@ secondEntry.grid(row=4, column=3)
 #endregion
 
 
-def savePDF(name):
-    pdf.output("{}.pdf".format(name))
-    print("File Saved!")
+# region working functions
+
+def generatePrompt():
+    nouns = pickle.load(open("nouns.dat", "rb"))
+    nounOnePrompt = str(random.sample(set(nouns), 1))[2:-2]
+    nounTwoPrompt = str(random.sample(set(nouns), 1))[2:-2]
+    adjs = pickle.load(open("adjs.dat", "rb"))
+    adjPrompt = str(random.sample(set(adjs), 1))[2:-2]
+    return " Please design a {} {} that is {}.".format(nounOnePrompt, nounTwoPrompt, adjPrompt)
 
 
 def addAdjuctive():
@@ -83,59 +99,96 @@ def addNoun():
         print("noun: first entry")
 
 
-#  todo add user input functionality, bug inside
-def startWriting():
+def earlyEnd():
+    global time
+    time = 0
+
+
+def setupTimer():
     try:
         # the input provided by the user is
-        # stored in here :temp
-        temp = int(hour.get()) * 3600 + int(minute.get()) * 60 + int(second.get())
+        global time
+        time = int(hour.get()) * 3600 + int(minute.get()) * 60 + int(second.get())
+        print("in setup time, success")
+        openSecondWindow()
+        startWriting()
     except:
         print("Please input the right value")
-    while temp > -1:
 
-        # divmod(firstvalue = temp//60, secondvalue = temp%60)
-        mins, secs = divmod(temp, 60)
 
-        # Converting the input entered in mins or secs to hours,
-        # mins ,secs(input = 110 min --> 120*60 = 6600 => 1hr :
-        # 50min: 0sec)
+#endregion
+
+
+def openSecondWindow():
+    typingWindow = Toplevel()
+
+    global prompt
+    prompt = generatePrompt()
+    promptText = Label(typingWindow, text=prompt)
+    promptText.pack()
+
+    global typingText
+    typingText = Text(typingWindow, width=40, height=10)#, textvariable=usersResponse )  #todo on this
+
+    typingText.pack()
+    endTypingButton = Button(typingWindow, text="Finish", command=earlyEnd)
+    endTypingButton.pack()
+
+    # global pdfName
+    # pdfTitle = Entry(newWindow, width=3, font=("Arial", 18, ""), textvariable=pdfName)
+    # pdfTitle.pack()
+
+
+#  todo add user input functionality, bug inside
+def startWriting():
+    global time
+    # time now working as intended
+    if time > 0:
+
+        # divmod(firstvalue = timeInSec//60, secondvalue = timeInSec%60)
+        mins, secs = divmod(time, 60)
+
         hours = 0
         if mins > 60:
-            # divmod(firstvalue = temp//60, secondvalue
-            # = temp%60)
+            # divmod(firstvalue = timeInSec//60, secondvalue
+            # = timeInSec%60)
             hours, mins = divmod(mins, 60)
 
-        # using format () method to store the value up to
-        # two decimal places
+
         hour.set("{0:2d}".format(hours))
         minute.set("{0:2d}".format(mins))
         second.set("{0:2d}".format(secs))
 
-        # updating the GUI window after decrementing the
-        # temp value every time
-        root.update()
-        time.sleep(1)
-
-        # when temp value = 0; then a messagebox pop's up
-        # with a message:"Time's up"
-        if temp == 0:
-            response = messagebox.askyesno("Time Countdown", "Would you like to save?")
-            if response:
-                newWindow = Toplevel()
-                newWindow.title("save?")
-
-                pdfTitle = Entry(newWindow, width=3, font=("Arial", 18, ""))
-                pdfTitle.pack()
-
-                savePdfButton = Button(newWindow, text="whatever", command=savePdfButton)  # todo fix functionality
-                savePdfButton.pack()
-
-        # after every one sec the value of temp will be decremented
-        # by one
-        temp -= 1
+        time -= 1
+        root.after(1000, startWriting)
+    elif time == 0:
+        global typingText  # todo working on this also
+        print(typingText.get(1.0, tk.END+"-1c"))     #todo this is a test variable
+        response = messagebox.askyesno("Time Countdown", "Would you like to save?")
+        if response:
+            newWindow = Toplevel()
+            newWindow.title("save?")
+            global pdfName
+            pdfTitle = Entry(newWindow, width=3, font=("Arial", 18, ""), textvariable=pdfName)
+            pdfTitle.pack()
+            savePdfButton = Button(newWindow, text="whatever", command=savePDF)
+            savePdfButton.pack()
 
 
-myButtonStart = Button(root, text="Begin!", command=startWriting)
+
+# todo fix accepting user input from different script
+def savePDF():
+    global typingText
+
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt=prompt, ln=1, align='C')
+    pdf.line(10, 20, 200, 20)
+    pdf.cell(200, 10, txt=typingText.get(1.0, tk.END+"-1c"), ln=2)
+    pdf.output("{}.pdf".format(pdfName.get()))
+    print("File Saved!")
+
+myButtonStart = Button(root, text="Begin!", command=setupTimer)
 myButtonStart.grid(row=5, column=2)
 
 
